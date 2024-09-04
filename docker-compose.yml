@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  comply-db:
+    image: postgres:16-alpine
+    container_name: comply-db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: comply_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+    volumes:
+      - comply_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d comply_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  comply-backend:
+    build: ./backend
+    container_name: comply-backend
+    ports:
+      - "8083:8083"
+    environment:
+      - DB_HOST=comply-db
+      - DB_PORT=5432
+      - DB_NAME=comply_db
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=root
+    depends_on:
+      comply-db:
+        condition: service_healthy
+
+  comply-frontend:
+    build: ./frontend
+    container_name: comply-frontend
+    ports:
+      - "80:80"
+    environment:
+      - VITE_API_BASE_URL=http://localhost:8083/api
+    depends_on:
+      - comply-backend
+
+volumes:
+  comply_db_data:
+
+# minor tweak: update verification rules and configs
+
+# minor tweak: update verification rules and configs at 7760
